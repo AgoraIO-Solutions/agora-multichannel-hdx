@@ -1,0 +1,107 @@
+name: Android Unit Test CI
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  unit-test:
+    runs-on: ubuntu-latest
+    environment: build
+    steps:
+    # Checkout the code!
+    - uses: actions/checkout@v3
+    # Create Google Services JSON
+    - name: Create Google Services JSON
+      working-directory: app
+      env:
+        DATA: ${{ secrets.GOOGLE_SERVICES }}
+      run: |
+        echo $DATA > google-services.json
+
+    - name: set up JDK 18
+      uses: actions/setup-java@v3
+      with:
+        java-version: '18'
+        distribution: 'temurin'
+        cache: gradle
+
+    - name: Grant execute permission for gradlew
+      run: chmod +x gradlew
+    - name: Build with Gradle
+      run: |
+        ./gradlew build
+        ./gradlew test
+  ui-test:
+    runs-on: macos-latest
+    environment: build
+    steps:
+      - name: checkout
+        uses: actions/checkout@v3
+      # Create Google Services JSON
+      - name: Create Google Services JSON
+        working-directory: app
+        env:
+          DATA: ${{ secrets.GOOGLE_SERVICES }}
+        run: |
+          echo $DATA > google-services.json
+
+      - name: set up JDK 18
+        uses: actions/setup-java@v3
+        with:
+          java-version: '18'
+          distribution: 'temurin'
+          cache: gradle
+
+      - name: run tests
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 29
+          script: ./gradlew connectedCheck
+
+  build-sign-upload-to-distro:
+    needs: [unit-test, ui-test]
+    runs-on: ubuntu-latest
+    environment: build
+    steps:
+    # Checkout the code!
+    - uses: actions/checkout@v3
+    # Create Google Services JSON
+    - name: Create Google Services JSON
+      working-directory: app
+      env:
+        DATA: ${{ secrets.GOOGLE_SERVICES }}
+      run: |
+        echo $DATA > google-services.json
+
+    - uses: r0adkll/sign-android-release@v1
+      name: Sign app APK
+      # ID used to access action output
+      id: sign_app
+      with:
+        releaseDirectory: app/build/outputs/apk/release
+        signingKeyBase64: ${{ secrets.SIGNING_KEY }}
+        alias: ${{ secrets.ALIAS }}
+        keyStorePassword: ${{ secrets.KEY_STORE_PASSWORD }}
+        keyPassword: ${{ secrets.KEY_PASSWORD }}
+      env:
+        # override default build-tools version (29.0.3) -- optional
+        BUILD_TOOLS_VERSION: "32.0.0"
+    - uses: actions/upload-artifact@v2
+      with:
+        name: Signed app bundle
+        path: ${{steps.sign_app.outputs.signedReleaseFile}}
+    # - name: set up JDK 18
+    #  uses: actions/setup-java@v3
+    #  with:
+    #    java-version: '18'
+    #    distribution: 'temurin'
+    #    cache: gradle
+
+    #- name: Grant execute permission for gradlew
+    #  run: chmod +x gradlew
+    #- name: Build with Gradle
+    #  run: |
+    #    ./gradlew build
