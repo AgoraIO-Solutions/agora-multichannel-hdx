@@ -76,15 +76,32 @@ jobs:
       run: |
         echo $DATA > google-services.json
 
-    - name: set up JDK 18
-      uses: actions/setup-java@v3
+    - uses: r0adkll/sign-android-release@v1
+      name: Sign app APK
+      # ID used to access action output
+      id: sign_app
       with:
-        java-version: '18'
-        distribution: 'temurin'
-        cache: gradle
+        releaseDirectory: app/build/outputs/apk/release
+        signingKeyBase64: ${{ secrets.SIGNING_KEY }}
+        alias: ${{ secrets.ALIAS }}
+        keyStorePassword: ${{ secrets.KEY_STORE_PASSWORD }}
+        keyPassword: ${{ secrets.KEY_PASSWORD }}
+      env:
+        # override default build-tools version (29.0.3) -- optional
+        BUILD_TOOLS_VERSION: "32.0.0"
+    - uses: actions/upload-artifact@v2
+      with:
+        name: Signed app bundle
+        path: ${{steps.sign_app.outputs.signedReleaseFile}}
+    # - name: set up JDK 18
+    #  uses: actions/setup-java@v3
+    #  with:
+    #    java-version: '18'
+    #    distribution: 'temurin'
+    #    cache: gradle
 
-    - name: Grant execute permission for gradlew
-      run: chmod +x gradlew
-    - name: Build with Gradle
-      run: |
-        ./gradlew build
+    #- name: Grant execute permission for gradlew
+    #  run: chmod +x gradlew
+    #- name: Build with Gradle
+    #  run: |
+    #    ./gradlew build
