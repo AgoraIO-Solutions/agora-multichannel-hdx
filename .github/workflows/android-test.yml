@@ -16,7 +16,7 @@ jobs:
     - name: Create Google Services JSON
       working-directory: app
       env:
-        DATA: ${{ secrets.GOOGLE_SERVICES_JSON }}
+        DATA: ${{ secrets.GOOGLE_SERVICES }}
       run: |
         echo $DATA > google-services.json
 
