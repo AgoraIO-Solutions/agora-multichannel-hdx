@@ -18,8 +18,7 @@ jobs:
       env:
         DATA: ${{ secrets.GOOGLE_SERVICES_JSON }}
       run: |
-        ls -la
-        touch google-services.json
+        cat google-services.json | base64
         echo $DATA > google-services.json
 
     - name: set up JDK 18
