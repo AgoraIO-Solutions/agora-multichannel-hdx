@@ -34,35 +34,35 @@ jobs:
       run: |
         ./gradlew build
         ./gradlew test
-  ui-test:
-    runs-on: macos-latest
-    environment: build
-    steps:
-      - name: checkout
-        uses: actions/checkout@v3
-      # Create Google Services JSON
-      - name: Create Google Services JSON
-        working-directory: app
-        env:
-          DATA: ${{ secrets.GOOGLE_SERVICES }}
-        run: |
-          echo $DATA > google-services.json
+  #ui-test:
+  #  runs-on: macos-latest
+  #  environment: build
+  #  steps:
+  #    - name: checkout
+  #      uses: actions/checkout@v3
+  #    # Create Google Services JSON
+  #    - name: Create Google Services JSON
+  #      working-directory: app
+  #      env:
+  #        DATA: ${{ secrets.GOOGLE_SERVICES }}
+  #      run: |
+  #        echo $DATA > google-services.json
 
-      - name: set up JDK 18
-        uses: actions/setup-java@v3
-        with:
-          java-version: '18'
-          distribution: 'temurin'
-          cache: gradle
+  #    - name: set up JDK 18
+  #      uses: actions/setup-java@v3
+  #      with:
+  #        java-version: '18'
+  #        distribution: 'temurin'
+  #        cache: gradle
 
-      - name: run tests
-        uses: reactivecircus/android-emulator-runner@v2
-        with:
-          api-level: 29
-          script: ./gradlew connectedCheck
+  #    - name: run tests
+  #      uses: reactivecircus/android-emulator-runner@v2
+  #      with:
+  #        api-level: 29
+  #        script: ./gradlew connectedCheck
 
   build-sign-upload-to-distro:
-    needs: [unit-test, ui-test]
+    needs: [unit-test] #, ui-test]
     runs-on: ubuntu-latest
     environment: build
     steps:
@@ -75,6 +75,20 @@ jobs:
         DATA: ${{ secrets.GOOGLE_SERVICES }}
       run: |
         echo $DATA > google-services.json
+
+    - name: set up JDK 18
+      uses: actions/setup-java@v3
+      with:
+        java-version: '18'
+        distribution: 'temurin'
+        cache: gradle
+
+    - name: Grant execute permission for gradlew
+      run: chmod +x gradlew
+    - name: Build with Gradle
+      run: |
+        ./gradlew build
+        ./gradlew assembleRelease
 
     - uses: r0adkll/sign-android-release@v1
       name: Sign app APK
@@ -93,15 +107,3 @@ jobs:
       with:
         name: Signed app bundle
         path: ${{steps.sign_app.outputs.signedReleaseFile}}
-    # - name: set up JDK 18
-    #  uses: actions/setup-java@v3
-    #  with:
-    #    java-version: '18'
-    #    distribution: 'temurin'
-    #    cache: gradle
-
-    #- name: Grant execute permission for gradlew
-    #  run: chmod +x gradlew
-    #- name: Build with Gradle
-    #  run: |
-    #    ./gradlew build
