@@ -18,7 +18,7 @@ jobs:
       env:
         DATA: ${{ secrets.GOOGLE_SERVICES_JSON }}
       run: |
-        echo $FIREBASE_SECRET > google-services.json
+        echo $DATA > google-services.json
 
     - name: set up JDK 18
       uses: actions/setup-java@v3
