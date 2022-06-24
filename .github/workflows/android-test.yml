@@ -36,6 +36,7 @@ jobs:
         ./gradlew test
   ui-test:
     runs-on: macos-latest
+    environment: build
     steps:
       - name: checkout
         uses: actions/checkout@v3
